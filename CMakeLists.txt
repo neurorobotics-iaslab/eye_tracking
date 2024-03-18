@@ -9,11 +9,24 @@ find_package(catkin REQUIRED COMPONENTS
              std_msgs
              cv_bridge
              image_transport
+             message_generation
+             rosneuro_msgs
              )
 
 find_package(OpenCV REQUIRED)
 
 find_package(dlib REQUIRED)
+
+add_message_files(
+  FILES
+  pupil.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+    geometry_msgs
+    std_msgs
+)
              
 catkin_package(
   INCLUDE_DIRS 
@@ -23,6 +36,8 @@ catkin_package(
   CATKIN_DEPENDS
     roscpp
     std_msgs
+    message_runtime
+    rosneuro_msgs
   DEPENDS
 )
 
@@ -59,5 +74,5 @@ add_dependencies(${PROJECT_NAME}
 add_executable(gaze_node src/gaze_node.cpp)
 target_link_libraries(gaze_node  ${PROJECT_NAME}
                                  ${catkin_LIBRARIES}
-                                 dlib
+                                 dlib::dlib
                    )

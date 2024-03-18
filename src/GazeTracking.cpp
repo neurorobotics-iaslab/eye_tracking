@@ -1,15 +1,28 @@
 #include "eye_tracking/GazeTracking.h"
 
-GazeTracking::GazeTracking() {
+GazeTracking::GazeTracking() : p_nh_("~"){
+    this->pub_ = this->nh_.advertise<eye_tracking::pupil>("/cvsa/pupils", 1);
+    this->sub_ = this->nh_.subscribe("/events/bus", 1, &GazeTracking::on_received_data, this);
 }
 
 GazeTracking::~GazeTracking() {
 }
 
-bool GazeTracking::set_up(dlib::frontal_face_detector face_detector, dlib::shape_predictor predictor) {
-    this->face_detector_ = face_detector;
-    this->predictor_ = predictor;
+bool GazeTracking::set_up() {
+  
+    std::string model_path;
+    if(this->p_nh_.getParam("model_path", model_path) == false) {
+      ROS_ERROR("Parameter 'model_path' is mandatory");
+    }
+    this->face_detector_ = dlib::frontal_face_detector(dlib::get_frontal_face_detector());
+    dlib::deserialize(model_path) >> this->predictor_;
+
+    this->in_cf_ = false;
     return true;
+}
+
+void GazeTracking::on_received_data(const rosneuro_msgs::NeuroEvent& msg){
+
 }
 
 bool GazeTracking::run(cv::Mat frame) {

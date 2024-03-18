@@ -10,6 +10,9 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 
+#include "eye_tracking/pupil.h"
+#include <rosneuro_msgs/NeuroEvent.h>
+
 class GazeTracking{
 
 private:
@@ -21,11 +24,21 @@ private:
     std::vector<cv::Rect> eyes_box_;
     std::vector<cv::Point> eye_centers_;
 
+    int id = 0;
+
+    ros::NodeHandle nh_;
+	ros::NodeHandle p_nh_;
+	ros::Subscriber sub_;
+	ros::Publisher pub_;
+
+    eye_tracking::pupil msg_;
+    bool in_cf_;
+
 public:
     GazeTracking();
     ~GazeTracking();
 
-    bool set_up(dlib::frontal_face_detector face_detector, dlib::shape_predictor predictor);
+    bool set_up();
     bool run(cv::Mat frame);
 
 private:
@@ -35,6 +48,8 @@ private:
 
     cv::Mat gradient_as_matlab(const cv::Mat &mat);
     cv::Mat compute_magnitude(const cv::Mat &matX, const cv::Mat &matY);
+
+    void on_received_data(const rosneuro_msgs::NeuroEvent& msg);
     
     
     

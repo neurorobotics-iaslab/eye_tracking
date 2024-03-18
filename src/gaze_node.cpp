@@ -13,16 +13,11 @@
 int main(int argc, char** argv) {
 
     // ros initialization
-    ros::init(argc, argv, "gaze_tracking_node");
+    ros::init(argc, argv, "gaze_node");
     ros::NodeHandle nh;
 
-    std::string model_path = "/home/paolo/rosneuro_ws/src/eye_cvsa/trained_models/shape_predictor_68_face_landmarks.dat";
-    dlib::frontal_face_detector face_detector = dlib::frontal_face_detector(dlib::get_frontal_face_detector());
-    dlib::shape_predictor predictor;
-    dlib::deserialize(model_path) >> predictor;
-
     GazeTracking gaze_tracking;
-    gaze_tracking.set_up(face_detector, predictor);
+    gaze_tracking.set_up();
 
     cv::VideoCapture cap;
     cap.open(0);
@@ -32,16 +27,6 @@ int main(int argc, char** argv) {
     while (ros::ok()) {
         cv::Mat frame;
         cap >> frame;
-
-        /*if(calibration){
-            if (frame.empty()) {
-                ROS_ERROR("Camera frame is empty");
-                break;
-            }
-            Calibration* calib_left = new Calibration();
-            Calibration* calib_right = new Calibration();
-        }*/
-
         
         if (frame.empty()) {
             ROS_ERROR("Camera frame is empty");
