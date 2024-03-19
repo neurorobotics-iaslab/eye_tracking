@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
              image_transport
              message_generation
              rosneuro_msgs
+             sensor_msgs
              )
 
 find_package(OpenCV REQUIRED)
@@ -26,6 +27,7 @@ generate_messages(
   DEPENDENCIES
     geometry_msgs
     std_msgs
+    sensor_msgs
 )
              
 catkin_package(
@@ -38,6 +40,7 @@ catkin_package(
     std_msgs
     message_runtime
     rosneuro_msgs
+    sensor_msgs
   DEPENDS
 )
 

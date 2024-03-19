@@ -32,12 +32,10 @@ int main(int argc, char** argv) {
             ROS_ERROR("Camera frame is empty");
             break;
         }
-
-        cv::imshow("Camera", frame);
-        cv::waitKey(1);
-
+        
+        cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
         if(!gaze_tracking.run(frame)){
-            ROS_WARN("Error in gaze tracking");
+            ROS_WARN("Warning in gaze tracking");
         }
         ros::spinOnce();
 
