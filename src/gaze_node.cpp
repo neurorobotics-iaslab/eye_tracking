@@ -17,29 +17,13 @@ int main(int argc, char** argv) {
     ros::NodeHandle nh;
 
     GazeTracking gaze_tracking;
-    gaze_tracking.set_up();
-
-    cv::VideoCapture cap;
-    cap.open(0);
-
-    bool calibration = true;
-
-    while (ros::ok()) {
-        cv::Mat frame;
-        cap >> frame;
-        
-        if (frame.empty()) {
-            ROS_ERROR("Camera frame is empty");
-            break;
-        }
-        
-        cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
-        if(!gaze_tracking.run(frame)){
-            ROS_WARN("Warning in gaze tracking");
-        }
-        ros::spinOnce();
-
+    if(!gaze_tracking.configure()){
+        ROS_ERROR("Error in gaze tracking configuration");
+        ros::shutdown();
+        return 0;
     }
+
+    gaze_tracking.run();
 
     ros::shutdown();
 

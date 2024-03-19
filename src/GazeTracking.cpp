@@ -7,44 +7,72 @@ GazeTracking::GazeTracking() : p_nh_("~"){
 GazeTracking::~GazeTracking() {
 }
 
-bool GazeTracking::set_up() {
+bool GazeTracking::configure() {
   
     std::string model_path;
     if(this->p_nh_.getParam("model_path", model_path) == false) {
         ROS_ERROR("Parameter 'model_path' is mandatory");
+        return false;
     }
     this->face_detector_ = dlib::frontal_face_detector(dlib::get_frontal_face_detector());
     dlib::deserialize(model_path) >> this->predictor_;
 
     this->p_nh_.param("show_face_pupil_detect", this->show_face_pupil_detect_, false);
 
+    this->p_nh_.param("show_camera", this->show_face_pupil_detect_, false);
+
+    this->p_nh_.param("rate", this->rate_, 256);
+
+    this->p_nh_.param("camera_open", this->camera_open_, 0);
+
     return true;
 }
 
-bool GazeTracking::run(cv::Mat frame) {
+void GazeTracking::run() {
 
-    this->frame_ = frame;
 
-    // detection
-    if(detect_face()){
-        if(detect_eyes()){
-            if(detect_pupil()){
-                if(this->show_face_pupil_detect_){
-                    show();
+    cv::VideoCapture cap;
+    cap.open(this->camera_open_);
+
+    ros::Rate r(this->rate_);
+
+    while (ros::ok()) {
+        cap >> this->frame_;
+        
+        if (this->frame_.empty()) {
+            ROS_ERROR("Camera frame is empty");
+            break;
+        }
+
+        // show the frame
+        if(this->show_camera_){
+            cv::imshow("frame", this->frame_);
+            cv::waitKey(1);
+        }
+        
+        // convert to gray scale
+        cv::cvtColor(this->frame_, this->frame_, cv::COLOR_BGR2GRAY);
+
+        if(detect_face()){
+            if(detect_eyes()){
+                if(detect_pupil()){
+                    if(this->show_face_pupil_detect_){
+                        show();
+                    }
+                    //publish message
+                    publish_msgs();
+                }else{
+                    //ROS_WARN("Pupils not detected");
                 }
-                //publish message
-                publish_msgs();
-                return true;
             }else{
-                //ROS_WARN("Pupils not detected");
+                //ROS_WARN("Eyes not detected");
             }
         }else{
-            //ROS_WARN("Eyes not detected");
+            //ROS_WARN("Face not detected");
         }
-    }else{
-        //ROS_WARN("Face not detected");
+        r.sleep();
+        ros::spinOnce();
     }
-    return false;
 }
 
 bool GazeTracking::detect_face() {
@@ -59,12 +87,9 @@ bool GazeTracking::detect_face() {
         this->face_frame_ = this->frame_(rect).clone();
         
         return true;
-    }else{
-        this->face_box_ = dlib::rectangle(0, 0, 0, 0);
-        this->face_frame_ = cv::Mat();
-
-        return false;
     }
+
+    return false;
 }
 
 bool GazeTracking::detect_eyes(){
@@ -211,10 +236,7 @@ cv::Mat GazeTracking::normalize_gradient(cv::Mat &gradient, cv::Mat &magnitude){
 
 cv::Point GazeTracking::algorithm_Timm_Barth(cv::Mat &gradientX, cv::Mat &gradientY, cv::Mat &weight) {
     cv::Mat outSum = cv::Mat::zeros(gradientX.rows, gradientX.cols,CV_64F);
-    // for each possible gradient location
-    // Note: these loops are reversed from the way the paper does them
-    // it evaluates every possible center for each gradient location instead of
-    // every possible gradient location for every center.
+    // it evaluates every possible center for each gradient location
     for (int y = 0; y < weight.rows; ++y) {
         const double *Xr = gradientX.ptr<double>(y), *Yr = gradientY.ptr<double>(y);
         for (int x = 0; x < weight.cols; ++x) {

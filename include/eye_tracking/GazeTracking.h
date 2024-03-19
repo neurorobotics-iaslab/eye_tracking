@@ -4,15 +4,16 @@
 #include <dlib/opencv.h>
 #include <dlib/image_processing.h>
 #include <dlib/image_processing/frontal_face_detector.h>
+
 #include <vector>
 #include <ros/ros.h>
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include "cv_bridge/cv_bridge.h"
 
 #include "eye_tracking/pupil.h"
-#include <rosneuro_msgs/NeuroEvent.h>
 
 std::vector<int> left_eye_region_landmarks = {17, 19, 29}; // points used to obtain the eye zone
 std::vector<int> right_eye_region_landmarks = {26, 24, 29};
@@ -28,6 +29,9 @@ private:
     std::vector<cv::Rect> eyes_box_;
     std::vector<cv::Point> eye_centers_;
     bool show_face_pupil_detect_;
+    bool show_camera_;
+    int rate_;
+    int camera_open_;
 
     int id = 0;
 
@@ -41,8 +45,8 @@ public:
     GazeTracking();
     ~GazeTracking();
 
-    bool set_up();
-    bool run(cv::Mat frame);
+    bool configure();
+    void run();
 
 private:
     bool detect_face();
