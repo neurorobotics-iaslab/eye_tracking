@@ -3,10 +3,12 @@
     
     <!-- Eye_tracker arguments -->
         <arg name="model_path"      default='/home/paolo/rosneuro_ws/src/eye_tracking/trained_models/shape_predictor_68_face_landmarks.dat'/>
+		<arg name="show_face_pupil_detect"      default='true'/>
 
     <!-- aquisition node -->
     <node name="gaze_node" pkg="eye_tracking" type="gaze_node" output="screen" >
         <param name="~model_path"       value="$(arg model_path)"/>
+		<param name="~show_face_pupil_detect"   type="bool"   value="$(arg show_face_pupil_detect)"/>
     </node>
 
 </launch>

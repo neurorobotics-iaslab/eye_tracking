@@ -51,10 +51,6 @@ bool GazeTracking::detect_face() {
     // transform to gray scale to detect faces
     std::vector<dlib::rectangle> faces = this->face_detector_(dlib::cv_image<unsigned char>(this->frame_));
 
-    cv::imshow("Face", this->frame_);
-    cv::waitKey(1);
-
-
     // take only the first face
     if(faces.size() >= 1){
         // face found and save the image with only the face
@@ -301,8 +297,10 @@ void GazeTracking::show(){
 
 void GazeTracking::publish_msgs() {
     eye_tracking::pupil msg;
+
+    // pupil information
     msg.header.stamp = ros::Time::now();
-    msg.header.frame_id = "pupil";
+    msg.header.frame_id = "face_image";
     msg.header.seq = this->id++;
 
     msg.left_pupil.x = this->eye_centers_[0].x;
@@ -310,10 +308,12 @@ void GazeTracking::publish_msgs() {
     msg.right_pupil.x = this->eye_centers_[1].x;
     msg.right_pupil.y = this->eye_centers_[1].y;
 
-    msg.height = this->face_frame_.rows;
-    msg.width = this->face_frame_.cols;
+    // image information
     sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", this->face_frame_).toImageMsg();
     msg.face_image = *img_msg;
+    msg.face_image.header.stamp = msg.header.stamp;
+    msg.face_image.header.frame_id = "face_image";
+    msg.face_image.header.seq = this->id;
 
     this->pub_.publish(msg);
 }
