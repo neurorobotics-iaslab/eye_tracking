@@ -57,7 +57,7 @@ bool GazeTracking::detect_face() {
         this->face_box_ = faces[0];
         cv::Rect rect(face_box_.left(), face_box_.top(), face_box_.width(), face_box_.height());
         this->face_frame_ = this->frame_(rect).clone();
-
+        
         return true;
     }else{
         this->face_box_ = dlib::rectangle(0, 0, 0, 0);
@@ -68,6 +68,25 @@ bool GazeTracking::detect_face() {
 }
 
 bool GazeTracking::detect_eyes(){
+
+    dlib::full_object_detection landmarks = this->predictor_(dlib::cv_image<unsigned char>(this->frame_), this->face_box_);
+    std::vector<cv::Point> landmarks_points_left, landmarks_points_right;
+    for(int i = 0; i < left_eye_region_landmarks.size(); i++){
+        landmarks_points_left.push_back(cv::Point(landmarks.part(left_eye_region_landmarks[i]).x(), landmarks.part(left_eye_region_landmarks[i]).y()));
+    }
+    for(int i = 0; i < right_eye_region_landmarks.size(); i++){
+        landmarks_points_right.push_back(cv::Point(landmarks.part(right_eye_region_landmarks[i]).x(), landmarks.part(right_eye_region_landmarks[i]).y()));
+    }
+
+    cv::Rect left_eye_region(landmarks_points_left[0].x - this->face_box_.tl_corner().x(), landmarks_points_left[1].y - this->face_box_.tl_corner().y(), 
+                             landmarks_points_left[2].x - landmarks_points_left[0].x, landmarks_points_left[2].y - landmarks_points_left[1].y);
+    cv::Rect right_eye_region(landmarks_points_right[2].x  - this->face_box_.tl_corner().x(), landmarks_points_right[1].y - this->face_box_.tl_corner().y(),
+                             landmarks_points_right[0].x - landmarks_points_right[2].x, landmarks_points_right[2].y - landmarks_points_right[1].y);
+
+    this->eyes_box_ = {left_eye_region, right_eye_region};
+    
+    /*
+    // works -> position of the eyes zones are hardcoded
     int eye_region_width = this->face_box_.width() * 0.30;
     int eye_region_height = this->face_box_.width() * 0.25;
     int eye_region_top = this->face_box_.height() * 0.20;
@@ -75,17 +94,8 @@ bool GazeTracking::detect_eyes(){
     cv::Rect left_eye_region(this->face_box_.width() * 0.15, eye_region_top, eye_region_width, eye_region_height);
     cv::Rect right_eye_region(this->face_box_.width() - eye_region_width - this->face_box_.width() * 0.15, 
                               eye_region_top, eye_region_width, eye_region_height);
-    
-    this->eyes_box_ = {left_eye_region, right_eye_region};
 
-    /* debug to see where are the box eyes with respect to the face
-    cv::Mat tmp;
-    this->face_frame_.copyTo(tmp);
-
-    cv::rectangle(tmp, left_eye_region, cv::Scalar(0, 255, 0), 2);
-    cv::rectangle(tmp, right_eye_region, cv::Scalar(0, 255, 0), 2);
-
-    cv::imshow("boh", tmp);*/
+    */
 
     return true;
 }

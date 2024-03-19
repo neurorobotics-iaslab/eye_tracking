@@ -14,6 +14,9 @@
 #include "eye_tracking/pupil.h"
 #include <rosneuro_msgs/NeuroEvent.h>
 
+std::vector<int> left_eye_region_landmarks = {17, 19, 29}; // points used to obtain the eye zone
+std::vector<int> right_eye_region_landmarks = {26, 24, 29};
+
 class GazeTracking{
 
 private:

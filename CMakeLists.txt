@@ -10,7 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
              cv_bridge
              image_transport
              message_generation
-             rosneuro_msgs
              sensor_msgs
              )
 
@@ -39,7 +38,6 @@ catkin_package(
     roscpp
     std_msgs
     message_runtime
-    rosneuro_msgs
     sensor_msgs
   DEPENDS
 )

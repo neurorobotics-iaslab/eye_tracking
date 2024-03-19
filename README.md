@@ -4,7 +4,10 @@ this package followed the paper: ''ACCURATE EYE CENTRE LOCALISATION BY MEANS OF 
 
 # required
 OpenCV 4.2
-dlib
-the model: shape_predictor_68_face_landmarks.dat used to detect the face
+dlib -> used to detect the face
+shape_predictor_68_face_landmarks.dat used to obrain the eyes zones
 
-# example of usage
+# parameters
+model_path: path to shape_predictor_68_face_landmarks.dat
+show_face_pupil_detect: true if you want to see the detected pupils
+
