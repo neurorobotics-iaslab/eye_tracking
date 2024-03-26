@@ -8,7 +8,7 @@
 		<arg name="rate"      default='256'/>
 		<arg name="camera_open"      default='0'/>
 
-    <!-- aquisition node -->
+    <!-- Eye_tracker node -->
     <node name="gaze_node" pkg="eye_tracking" type="gaze_node" output="screen" >
         <param name="~model_path"       value="$(arg model_path)"/>
 		<param name="~show_face_pupil_detect"   type="bool"   value="$(arg show_face_pupil_detect)"/>

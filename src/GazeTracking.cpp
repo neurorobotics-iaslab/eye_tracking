@@ -1,3 +1,6 @@
+#ifndef EYE_TRACKING_GAZETRACKING1_CPP_
+#define EYE_TRACKING_GAZETRACKING1_CPP_
+
 #include "eye_tracking/GazeTracking.h"
 
 GazeTracking::GazeTracking() : p_nh_("~"){
@@ -19,7 +22,7 @@ bool GazeTracking::configure() {
 
     this->p_nh_.param("show_face_pupil_detect", this->show_face_pupil_detect_, false);
 
-    this->p_nh_.param("show_camera", this->show_face_pupil_detect_, false);
+    this->p_nh_.param("show_camera", this->show_camera_, false);
 
     this->p_nh_.param("rate", this->rate_, 256);
 
@@ -84,8 +87,15 @@ bool GazeTracking::detect_face() {
         // face found and save the image with only the face
         this->face_box_ = faces[0];
         cv::Rect rect(face_box_.left(), face_box_.top(), face_box_.width(), face_box_.height());
-        this->face_frame_ = this->frame_(rect).clone();
-        
+        try{
+            this->face_frame_ = this->frame_(rect).clone();
+            return true;
+        }
+        catch(...){
+            ROS_WARN("Error in cropping the face");
+            return false;
+        }
+
         return true;
     }
 
@@ -273,42 +283,48 @@ bool GazeTracking::detect_pupil() {
     this->eye_centers_ = {};
     for(int side = 0; side < this->eyes_box_.capacity(); side++){
         // take both eyes from boxes and face_frame_
-        cv::Mat eye = this->face_frame_(this->eyes_box_[side]);
-        cv::resize(eye, eye, cv::Size(50,(((float)50)/eye.cols) * eye.rows));
+        try{
+            cv::Mat eye = this->face_frame_(this->eyes_box_[side]);
+            cv::resize(eye, eye, cv::Size(50,(((float)50)/eye.cols) * eye.rows));
 
-        // Find the gradient -> implemented to be similar to the matlab code and in the paper of Timm and Barth
-        cv::Mat gradientX = gradient_as_matlab(eye);
-        cv::Mat gradientY = gradient_as_matlab(eye.t()).t();
+            // Find the gradient -> implemented to be similar to the matlab code and in the paper of Timm and Barth
+            cv::Mat gradientX = gradient_as_matlab(eye);
+            cv::Mat gradientY = gradient_as_matlab(eye.t()).t();
 
-        // normalize and threshold the gradient
-        cv::Mat mags = compute_magnitude(gradientX, gradientY);
+            // normalize and threshold the gradient
+            cv::Mat mags = compute_magnitude(gradientX, gradientY);
 
-        gradientX = normalize_gradient(gradientX, mags);
-        gradientY = normalize_gradient(gradientY, mags);
+            gradientX = normalize_gradient(gradientX, mags);
+            gradientY = normalize_gradient(gradientY, mags);
 
-        // create a blurred and inverted image for weighting
-        cv::Mat weight;
-        GaussianBlur(eye, weight, cv::Size( 5, 5 ), 0, 0 );
-        for (int y = 0; y < weight.rows; ++y) {
-            unsigned char *row = weight.ptr<unsigned char>(y);
-            for (int x = 0; x < weight.cols; ++x) {
-                row[x] = (255 - row[x]);
+            // create a blurred and inverted image for weighting
+            cv::Mat weight;
+            GaussianBlur(eye, weight, cv::Size( 5, 5 ), 0, 0 );
+            for (int y = 0; y < weight.rows; ++y) {
+                unsigned char *row = weight.ptr<unsigned char>(y);
+                for (int x = 0; x < weight.cols; ++x) {
+                    row[x] = (255 - row[x]);
+                }
             }
-        }
 
-        // run Timm and Barth algorithm
-        cv::Point maxP = algorithm_Timm_Barth(gradientX, gradientY, weight);
+            // run Timm and Barth algorithm
+            cv::Point maxP = algorithm_Timm_Barth(gradientX, gradientY, weight);
 
-        // unscaled the point
-        float ratio = (((float)50)/this->eyes_box_[side].width);
-        int x = round(maxP.x / ratio);
-        int y = round(maxP.y / ratio);
-        this->eye_centers_.push_back(cv::Point(x,y));
+            // unscaled the point
+            float ratio = (((float)50)/this->eyes_box_[side].width);
+            int x = round(maxP.x / ratio);
+            int y = round(maxP.y / ratio);
+            this->eye_centers_.push_back(cv::Point(x,y));
+        }catch(...){
+            ROS_WARN("Error in cropping the eyes");
+            return false;
+        } 
     } 
 
    
     // check if both pupils are detected
     if(this->eye_centers_.size() != 2){
+        ROS_WARN("Error not both eyes are computed");
         return false;
     }
     
@@ -350,7 +366,7 @@ void GazeTracking::publish_msgs() {
     this->pub_.publish(msg);
 }
 
-
+#endif  
 
 
 
